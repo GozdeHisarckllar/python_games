@@ -55,7 +55,7 @@ while True:
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             for index, duck_rect in enumerate(duck_rect_list):
-                if duck_rect.collidepoint(event.pos):   # Collusion refinement --instead of crosshair_rect.colliderect(duck_rect):
+                if duck_rect.collidepoint(event.pos):   # Collision refinement --instead of crosshair_rect.colliderect(duck_rect):
                     del duck_rect_list[index]
 
     # WOOD - BACKGROUND               
