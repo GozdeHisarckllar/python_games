@@ -216,6 +216,6 @@ while True:
         score += main_game()
     else:
         end_game()
- # set timer for laser recharging and create an alert feature
+ 
     pygame.display.update() # draw frame
     clock.tick(120) # control the frame rate
