@@ -285,7 +285,7 @@ while True:
             pygame.quit()
             sys.exit()
 
-        if event.type == METEOR_EVENT:
+        if event.type == METEOR_EVENT and not intro_loaded:
             meteor_path = random.choice(('Meteor1.png', 'Meteor2.png', 'Meteor3.png'))
             meteor = Meteor(
                 f'./assets/{meteor_path}', 
@@ -296,7 +296,7 @@ while True:
             )
             meteor_group.add(meteor)
 
-        if event.type == pygame.MOUSEBUTTONDOWN and spaceship_group.sprite.health > 0 and laser_active:
+        if event.type == pygame.MOUSEBUTTONDOWN and spaceship_group.sprite.health > 0 and laser_active and not intro_loaded:
             laser = Laser('./assets/laser.png', event.pos, 12)
             laser_group.add(laser)
             laser_active = False
@@ -327,8 +327,9 @@ while True:
 
         if event.type == pygame.MOUSEBUTTONDOWN and game_state == "intro" and intro_loaded:
             game_state = "main"
+            intro_loaded = False
 
-        if event.type == SHIELD_EVENT:
+        if event.type == SHIELD_EVENT and not intro_loaded:
             shield = Shield(
                 './assets/shield.png',
                 random.randrange(0, 1280),
@@ -339,7 +340,7 @@ while True:
 
             shield_group.add(shield)
 
-        if event.type == ACCELERATOR_EVENT:
+        if event.type == ACCELERATOR_EVENT and not intro_loaded:
             laser_acc = LaserAccelerator(
                 './assets/item_1.png',
                 random.randrange(0, 1280),
