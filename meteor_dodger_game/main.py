@@ -8,12 +8,12 @@ class Spaceship(pygame.sprite.Sprite):
     def __init__(self, path, x_pos, y_pos):
         super().__init__()
         self.uncharged = pygame.image.load(path)
-        self.charged = pygame.image.load('./assets/spaceship_charged.png')
+        self.charged = pygame.image.load('./assets/gfx/spaceship_charged.png')
 
         self.image = self.uncharged
         self.rect = self.image.get_rect(center = (x_pos, y_pos))
 
-        self.shield_surface = pygame.image.load('./assets/shield.png')
+        self.shield_surface = pygame.image.load('./assets/gfx/shield.png')
         self.health = 5
 
     def update(self):
@@ -137,7 +137,8 @@ pygame.init()
 # Game setup
 screen = pygame.display.set_mode((1280,720))
 clock = pygame.time.Clock()
-game_font = pygame.font.Font('./assets/LazenbyCompSmooth.ttf', 40)
+game_font = pygame.font.Font('./assets/fonts/LazenbyCompSmooth.ttf', 40)
+game_font_2 = pygame.font.Font('./assets/fonts/LazenbyCompSmooth.ttf', 24)
 score = 0
 laser_timer = 0
 laser_active = False
@@ -150,13 +151,23 @@ intro_loaded = False
 
 pygame.mouse.set_visible(False)
 
+# Rendering texts
+intro_text_surface = game_font.render('Are you ready?', True, (255,255,255))
+intro_text_surface_2 = game_font_2.render('Click to continue', True, (255,255,255))
+  
+intro_text_rect = intro_text_surface.get_rect(center = (640, 260))#320
+intro_text_rect_2 = intro_text_surface_2.get_rect(center = (640, 400))
+
+ending_text_surface = game_font.render('Game Over', True, (255,255,255))
+ending_text_rect = ending_text_surface.get_rect(center = (640, 260)) #320
+
 # Background surfaces
-intro_bg = pygame.image.load('./assets/background_3.png').convert_alpha()
-space_bg = pygame.image.load('./assets/background_6.png').convert_alpha()
-end_bg = pygame.image.load('./assets/background_4.png').convert_alpha()
+intro_bg = pygame.image.load('./assets/gfx/background_3.png').convert_alpha()
+space_bg = pygame.image.load('./assets/gfx/background_6.png').convert_alpha()
+end_bg = pygame.image.load('./assets/gfx/background_4.png').convert_alpha()
 
 # Groups
-spaceship = Spaceship('./assets/spaceship.png', 640, 500)
+spaceship = Spaceship('./assets/gfx/spaceship.png', 640, 500)
 spaceship_group = pygame.sprite.GroupSingle()
 spaceship_group.add(spaceship)
 
@@ -187,17 +198,9 @@ def intro():
     intro_loaded = True
 
     screen.blit(intro_bg, (0,0))
-
-    text_surface = game_font.render('Are you ready?', True, (255,255,255))
     
-    game_font_2 = pygame.font.Font('./assets/LazenbyCompSmooth.ttf', 24)
-    text_surface_2 = game_font_2.render('Click to continue', True, (255,255,255))
-  
-    text_rect = text_surface.get_rect(center = (640, 260))#320
-    text_rect_2 = text_surface_2.get_rect(center = (640, 400))
-    
-    screen.blit(text_surface, text_rect)
-    screen.blit(text_surface_2, text_rect_2)
+    screen.blit(intro_text_surface, intro_text_rect)
+    screen.blit(intro_text_surface_2, intro_text_rect_2)
 
 
 def main_game():
@@ -263,9 +266,7 @@ def end_game():
        
     screen.blit(end_bg, (0,0))
 
-    text_surface = game_font.render('Game Over', True, (255,255,255))
-    text_rect = text_surface.get_rect(center = (640, 260)) #320
-    screen.blit(text_surface, text_rect)
+    screen.blit(ending_text_surface, ending_text_rect)
 
     score_surface = game_font.render(f'###  Score: {score}  ###', True, (255,220,255))
     score_rect = score_surface.get_rect(center = (640, 340)) #400
@@ -288,7 +289,7 @@ while True:
         if event.type == METEOR_EVENT and not intro_loaded:
             meteor_path = random.choice(('Meteor1.png', 'Meteor2.png', 'Meteor3.png'))
             meteor = Meteor(
-                f'./assets/{meteor_path}', 
+                f'./assets/gfx/{meteor_path}', 
                 random.randrange(0, 1280),   # x_pos
                 random.randrange(-500, -50), # y_pod
                 random.randrange(-1, 1),     # x_speed
@@ -297,17 +298,17 @@ while True:
             meteor_group.add(meteor)
 
         if event.type == pygame.MOUSEBUTTONDOWN and spaceship_group.sprite.health > 0 and laser_active and not intro_loaded:
-            laser = Laser('./assets/laser.png', event.pos, 12)
+            laser = Laser('./assets/gfx/laser.png', event.pos, 12)
             laser_group.add(laser)
             laser_active = False
             laser_timer = pygame.time.get_ticks()
 
             if accelerator_active:
-                laser_rotated_left = Laser('./assets/laser.png', event.pos, 12, 'left', 8)
+                laser_rotated_left = Laser('./assets/gfx/laser.png', event.pos, 12, 'left', 8)
                 laser_rotated_left.rotate_left()
                 laser_group.add(laser_rotated_left)
 
-                laser_rotated_right = Laser('./assets/laser.png', event.pos, 12, 'right', 8)
+                laser_rotated_right = Laser('./assets/gfx/laser.png', event.pos, 12, 'right', 8)
                 laser_rotated_right.rotate_right()
                 laser_group.add(laser_rotated_right)
 
@@ -331,7 +332,7 @@ while True:
 
         if event.type == SHIELD_EVENT and not intro_loaded:
             shield = Shield(
-                './assets/shield.png',
+                './assets/gfx/shield.png',
                 random.randrange(0, 1280),
                 random.randrange(-500, -50),
                 random.randrange(-1, 1),
@@ -342,7 +343,7 @@ while True:
 
         if event.type == ACCELERATOR_EVENT and not intro_loaded:
             laser_acc = LaserAccelerator(
-                './assets/item_1.png',
+                './assets/gfx/item_1.png',
                 random.randrange(0, 1280),
                 random.randrange(-500, -50),
                 random.randrange(-1, 1),
@@ -350,6 +351,8 @@ while True:
             )
             laser_acc_group.add(laser_acc)
 
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            spaceship_group.sprite.health = 0
     #screen.fill((41,42,45)) # rgb color 
    
     if game_state == "intro":
