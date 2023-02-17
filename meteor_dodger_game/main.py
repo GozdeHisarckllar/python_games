@@ -5,15 +5,15 @@ import pygame, sys, random
 # Spaceship Sprite  ---------------------------
 
 class Spaceship(pygame.sprite.Sprite):
-    def __init__(self, path, x_pos, y_pos):
+    def __init__(self, uncharged_path, charged_path, x_pos, y_pos):
         super().__init__()
-        self.uncharged = pygame.image.load(path)
-        self.charged = pygame.image.load('./assets/gfx/spaceship_charged.png')
+        self.uncharged = pygame.image.load(uncharged_path).convert_alpha()
+        self.charged = pygame.image.load(charged_path).convert_alpha()
 
         self.image = self.uncharged
         self.rect = self.image.get_rect(center = (x_pos, y_pos))
 
-        self.shield_surface = pygame.image.load('./assets/gfx/shield.png')
+        self.shield_surface = pygame.image.load('./assets/gfx/shield.png').convert_alpha()
         self.health = 5
 
     def update(self):
@@ -167,7 +167,13 @@ space_bg = pygame.image.load('./assets/gfx/background_6.png').convert_alpha()
 end_bg = pygame.image.load('./assets/gfx/background_4.png').convert_alpha()
 
 # Groups
-spaceship = Spaceship('./assets/gfx/spaceship.png', 640, 500)
+spaceship = Spaceship(
+    './assets/gfx/spaceship.png',
+    './assets/gfx/spaceship_charged.png', 
+    640, 
+    500
+)
+
 spaceship_group = pygame.sprite.GroupSingle()
 spaceship_group.add(spaceship)
 
