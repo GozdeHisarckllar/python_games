@@ -1,5 +1,5 @@
 import pygame, sys, random
-
+##### different sized meteors ->transform _>scale
 # Sprite classes
 
 # Spaceship Sprite  ---------------------------
@@ -50,9 +50,10 @@ class Meteor(pygame.sprite.Sprite):
         super().__init__()
         self.x_speed = x_speed
         self.y_speed = y_speed
-
+        self.x_pos = x_pos
+        self.y_pos = y_pos
         self.image = pygame.image.load(path)
-        self.rect = self.image.get_rect(center = (x_pos, y_pos))
+        self.rect = self.image.get_rect(center = (self.x_pos, self.y_pos))
 
     def update(self):
         self.rect.centerx += self.x_speed
@@ -131,6 +132,35 @@ class Shield(pygame.sprite.Sprite):
         if self.rect.centery == 800:
             self.kill()
 
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.images = []
+
+        for num in range(1, 6):
+            exp_img = pygame.image.load(f'./assets/gfx/misc/exp{num}.png').convert_alpha()
+            exp_img = pygame.transform.scale(exp_img, (100, 100))
+            self.images.append(exp_img)
+
+        self.index = 0
+        self.image = self.images[self.index]
+        self.rect = self.image.get_rect(center=(x,y))
+        #self.rect.center = [x,y]
+        self.counter = 0
+
+    def update(self):
+        exp_speed = 4
+        self.counter += 1
+
+        if self.counter >= exp_speed and self.index < len(self.images) - 1:
+            self.index += 1
+            self.image = self.images[self.index]
+            self.counter = 0
+
+        if self.counter >= exp_speed and self.index >= len(self.images) - 1:
+            self.kill()
+
+
 # ----------------------------------------------
 pygame.init()
 
@@ -159,7 +189,10 @@ intro_text_rect = intro_text_surface.get_rect(center = (640, 260))#320
 intro_text_rect_2 = intro_text_surface_2.get_rect(center = (640, 400))
 
 ending_text_surface = game_font.render('Game Over', True, (255,255,255))
+ending_text_surface_2 = game_font_2.render('Press the Spacebar to play again', True, (255,255,255))
+
 ending_text_rect = ending_text_surface.get_rect(center = (640, 260)) #320
+ending_text_rect_2 = ending_text_surface_2.get_rect(center = (640, 620))
 
 # Background surfaces
 intro_bg = pygame.image.load('./assets/gfx/background_3.png').convert_alpha()
@@ -185,6 +218,7 @@ laser_acc_group = pygame.sprite.Group()
 
 shield_group = pygame.sprite.Group()
 
+explosion_group = pygame.sprite.Group()
 
 # USEREVENTS
 METEOR_EVENT = pygame.USEREVENT
@@ -242,7 +276,19 @@ def main_game():
         spaceship_group.sprite.get_damage(1)
 
     for laser_sprite in laser_group:
-        pygame.sprite.spritecollide(laser_sprite, meteor_group, True)
+        meteors = pygame.sprite.spritecollide(laser_sprite, meteor_group, True)
+
+        if len(meteors) > 0:
+            for meteor in meteors:
+                explosion = Explosion(meteor.rect.x + 50, meteor.rect.y)
+                explosion_group.add(explosion)
+        '''
+        if len(meteors) > 0:
+            for meteor in meteors:
+                explosion = Explosion(meteor.x_pos, meteor.y_pos)
+                explosion_group.add(explosion)
+                print(meteors)
+        '''
 
     if spaceship_group.sprite.health < 5 and pygame.sprite.spritecollide(spaceship_group.sprite, shield_group, True):
         spaceship_group.sprite.get_shield(1)
@@ -259,6 +305,9 @@ def main_game():
     if pygame.time.get_ticks() - accelerator_timer >= 12000:
         accelerator_active = False
 
+    explosion_group.draw(screen)
+    explosion_group.update()
+
     return 1
 
 def end_game():
@@ -273,6 +322,7 @@ def end_game():
     screen.blit(end_bg, (0,0))
 
     screen.blit(ending_text_surface, ending_text_rect)
+    screen.blit(ending_text_surface_2, ending_text_rect_2)
 
     score_surface = game_font.render(f'###  Score: {score}  ###', True, (255,220,255))
     score_rect = score_surface.get_rect(center = (640, 340)) #400
@@ -321,7 +371,7 @@ while True:
             spaceship_group.sprite.discharge()
 
         # Restarting the game
-        if event.type == pygame.MOUSEBUTTONDOWN and spaceship_group.sprite.health <= 0:
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE and spaceship_group.sprite.health <= 0:
             spaceship_group.sprite.health = 5
             meteor_group.empty()
             shield_group.empty()
