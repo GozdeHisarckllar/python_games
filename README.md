@@ -13,3 +13,4 @@ The game projects that I built using Python and [PyGame](https://www.pygame.org/
   - intro state
   - shield and accelerator sprites
   - sliding background
+  - animated explosion effects
