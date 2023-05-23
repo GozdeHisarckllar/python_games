@@ -17,5 +17,5 @@ The game projects that I built using Python and [PyGame](https://www.pygame.org/
   - meteors in variant sizes
   - sliding background
   - graphic & sound effects for collided game items
-    - [Space Music Pack](https://gooseninja.itch.io/space-music-pack) 
+    - Space Music Pack ([https://gooseninja.itch.io/space-music-pack](https://gooseninja.itch.io/space-music-pack))
     - Sound Effect by SoulProdMusic from Pixabay
