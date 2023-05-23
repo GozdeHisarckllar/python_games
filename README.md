@@ -10,7 +10,7 @@ The game projects that I built using Python and [PyGame](https://www.pygame.org/
   - game intro state
   - keyboard input event listeners
   - shield and laser-booster sprites (spaceship boosters)
-  - spaceship recovery with extra shields
+  - spaceship recovery through extra shields
   - score meter
   - saving/storing highest-score during the game session
   - laser enhancement (triple laser shooter)
