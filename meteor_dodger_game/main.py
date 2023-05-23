@@ -1,5 +1,6 @@
 import pygame, sys, random
-##### different sized meteors ->transform _>scale
+from openal import *
+
 # Sprite classes
 
 # Spaceship Sprite  ---------------------------
@@ -53,6 +54,15 @@ class Meteor(pygame.sprite.Sprite):
         self.x_pos = x_pos
         self.y_pos = y_pos
         self.image = pygame.image.load(path)
+        self.img_size = random.randint(60, 110)
+        self.is_giant = False
+
+        low_probability_choice = random.choice(range(180))
+        if low_probability_choice == 0:
+            self.img_size = random.randint(200, 300)
+            self.is_giant = True 
+
+        self.image = pygame.transform.scale(self.image, (self.img_size, self.img_size))
         self.rect = self.image.get_rect(center = (self.x_pos, self.y_pos))
 
     def update(self):
@@ -67,11 +77,11 @@ class Meteor(pygame.sprite.Sprite):
 # Laser and Item Sprites  ------------------------------
 
 class Laser(pygame.sprite.Sprite):
-    def __init__(self, path, pos, speed, dir='up', acc_speed=None):
+    def __init__(self, path, pos, speed, direction='up', speed_enhanced=None):
         super().__init__()
         self.speed = speed
-        self.dir = dir
-        self.acc_speed = acc_speed
+        self.direction = direction
+        self.speed_enhanced = speed_enhanced
 
         self.image = pygame.image.load(path)
         self.rotated_left = pygame.transform.rotate(self.image, 30)
@@ -79,14 +89,14 @@ class Laser(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect(center = pos)
 
-        if self.dir == 'right':
+        if self.direction == 'right':
             self.rect.centery -= 30
 
     def update(self):
-        if self.dir == 'left':
-            self.rect.centerx -= self.acc_speed 
-        elif self.dir == 'right':
-            self.rect.centerx += self.acc_speed
+        if self.direction == 'left':
+            self.rect.centerx -= self.speed_enhanced 
+        elif self.direction == 'right':
+            self.rect.centerx += self.speed_enhanced
 
         self.rect.centery -= self.speed
 
@@ -99,14 +109,18 @@ class Laser(pygame.sprite.Sprite):
     def rotate_right(self):
         self.image = self.rotated_right
 
-class LaserAccelerator(pygame.sprite.Sprite):
-    def __init__(self, path, x_pos, y_pos, x_speed, y_speed):
+
+class Booster(pygame.sprite.Sprite):
+    def __init__(self, path, booster_type, x_pos, y_pos, x_speed, y_speed):
         super().__init__()
         self.x_speed = x_speed
         self.y_speed = y_speed
 
         self.image = pygame.image.load(path)
-        self.image = pygame.transform.scale(self.image, (200,200))
+        if booster_type == 1:
+            self.image = pygame.transform.scale(self.image, (200,200))
+        elif booster_type == 0:
+            self.image = pygame.transform.scale(self.image, (50,50))
         self.rect = self.image.get_rect(center = (x_pos, y_pos))
 
     def update(self):
@@ -116,30 +130,14 @@ class LaserAccelerator(pygame.sprite.Sprite):
         if self.rect.centery == 800:
             self.kill()
 
-class Shield(pygame.sprite.Sprite):
-    def __init__(self, path, x_pos, y_pos, x_speed, y_speed):
-        super().__init__()
-        self.x_speed = x_speed
-        self.y_speed = y_speed
-
-        self.image = pygame.image.load(path)
-        self.rect = self.image.get_rect(center = (x_pos, y_pos))
-
-    def update(self):
-        self.rect.centerx += self.x_speed
-        self.rect.centery += self.y_speed
-
-        if self.rect.centery == 800:
-            self.kill()
-
-class Explosion(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+class Animation(pygame.sprite.Sprite):
+    def __init__(self, x, y, img_name, img_range, size):
         super().__init__()
         self.images = []
 
-        for num in range(1, 6):
-            exp_img = pygame.image.load(f'./assets/gfx/misc/exp{num}.png').convert_alpha()
-            exp_img = pygame.transform.scale(exp_img, (100, 100))
+        for num in img_range:
+            exp_img = pygame.image.load(f'./assets/gfx/animation/{img_name}{num}.png').convert_alpha()
+            exp_img = pygame.transform.scale(exp_img, size)
             self.images.append(exp_img)
 
         self.index = 0
@@ -160,21 +158,37 @@ class Explosion(pygame.sprite.Sprite):
         if self.counter >= exp_speed and self.index >= len(self.images) - 1:
             self.kill()
 
-
 # ----------------------------------------------
 pygame.init()
 
-# Game setup
+## Game setup
 screen = pygame.display.set_mode((1280,720))
 clock = pygame.time.Clock()
+
+# SFX
+intro_sound = oalOpen('./assets/sfx/intro.wav')
+main_sound = oalOpen('./assets/sfx/slow_travel.wav')
+crash_sound = oalOpen('./assets/sfx/crash.wav')
+booster_sound = oalOpen('./assets/sfx/booster.wav')
+end_sound = oalOpen('./assets/sfx/futuristic.wav')
+
+oal_listener = oalGetListener() 
+oal_listener.set_gain(.2)
+intro_sound.play()
+
+for sound in [intro_sound, main_sound]:
+    sound.set_looping(True)
+
 game_font = pygame.font.Font('./assets/fonts/LazenbyCompSmooth.ttf', 40)
 game_font_2 = pygame.font.Font('./assets/fonts/LazenbyCompSmooth.ttf', 24)
+
 score = 0
+score_visible = 0
 laser_timer = 0
 laser_active = False
 highest_score = 0
-accelerator_active = False
-accelerator_timer = 0
+booster_active = False
+booster_timer = 0
 bg_slide_y = 0
 game_state = "intro"
 intro_loaded = False
@@ -183,16 +197,19 @@ pygame.mouse.set_visible(False)
 
 # Rendering texts
 intro_text_surface = game_font.render('Are you ready?', True, (255,255,255))
-intro_text_surface_2 = game_font_2.render('Click to continue', True, (255,255,255))
+intro_text_surface_2 = game_font_2.render('Press the Spacebar to play', True, (255,255,255))
   
 intro_text_rect = intro_text_surface.get_rect(center = (640, 260))#320
 intro_text_rect_2 = intro_text_surface_2.get_rect(center = (640, 400))
 
-ending_text_surface = game_font.render('Game Over', True, (255,255,255))
+ending_text_surface = game_font.render('You\'re a space hero !', True, (255,255,255))
 ending_text_surface_2 = game_font_2.render('Press the Spacebar to play again', True, (255,255,255))
 
 ending_text_rect = ending_text_surface.get_rect(center = (640, 260)) #320
 ending_text_rect_2 = ending_text_surface_2.get_rect(center = (640, 620))
+
+score_label = game_font_2.render('Score', True, (255,255,255))
+score_label_rect = score_label.get_rect(center=(1225, 25))
 
 # Background surfaces
 intro_bg = pygame.image.load('./assets/gfx/background_3.png').convert_alpha()
@@ -214,11 +231,11 @@ meteor_group = pygame.sprite.Group()
 
 laser_group = pygame.sprite.Group()
 
-laser_acc_group = pygame.sprite.Group()
+laser_booster_group = pygame.sprite.Group()
 
 shield_group = pygame.sprite.Group()
 
-explosion_group = pygame.sprite.Group()
+animation_group = pygame.sprite.Group()
 
 # USEREVENTS
 METEOR_EVENT = pygame.USEREVENT
@@ -227,8 +244,8 @@ pygame.time.set_timer(METEOR_EVENT, 150)
 SHIELD_EVENT = pygame.USEREVENT + 1
 pygame.time.set_timer(SHIELD_EVENT, random.randint(6000, 10000))
 
-ACCELERATOR_EVENT = pygame.USEREVENT + 2
-pygame.time.set_timer(ACCELERATOR_EVENT, random.randint(15000, 18000))
+LASER_BOOSTER_EVENT = pygame.USEREVENT + 2
+pygame.time.set_timer(LASER_BOOSTER_EVENT, random.randint(14000, 19000))
 
 
 # Game States
@@ -245,10 +262,10 @@ def intro():
 
 def main_game():
     global laser_active
-    global accelerator_active
-    global accelerator_timer
+    global booster_active
+    global booster_timer
     global bg_slide_y
-
+    global score_visible
     # Sliding background
     if bg_slide_y >= 720:
         #screen.blit(space_bg, (0, i-720)) #no + 1
@@ -260,8 +277,8 @@ def main_game():
     laser_group.draw(screen)
     laser_group.update()
 
-    laser_acc_group.draw(screen)
-    laser_acc_group.update()
+    laser_booster_group.draw(screen)
+    laser_booster_group.update()
 
     spaceship_group.draw(screen)
     spaceship_group.update()
@@ -272,41 +289,96 @@ def main_game():
     shield_group.draw(screen)
     shield_group.update()
 
-    if pygame.sprite.spritecollide(spaceship_group.sprite, meteor_group, True): # returns a list of collided sprites
-        spaceship_group.sprite.get_damage(1)
+    animation_group.draw(screen)
+    animation_group.update()
+
+    if score % 50 == 0:
+        score_visible = score
+      
+    score_surface = game_font_2.render(f'{score_visible}', True, (255,255,255))
+    score_rect = score_surface.get_rect(center=(1225, 60))
+    screen.blit(score_surface, score_rect)
+    screen.blit(score_label, score_label_rect)
 
     for laser_sprite in laser_group:
         meteors = pygame.sprite.spritecollide(laser_sprite, meteor_group, True)
 
         if len(meteors) > 0:
             for meteor in meteors:
-                explosion = Explosion(meteor.rect.x + 50, meteor.rect.y)
-                explosion_group.add(explosion)
-        '''
-        if len(meteors) > 0:
-            for meteor in meteors:
-                explosion = Explosion(meteor.x_pos, meteor.y_pos)
-                explosion_group.add(explosion)
-                print(meteors)
-        '''
+                explosion = Animation(
+                    meteor.rect.x + 50, 
+                    meteor.rect.y, 
+                    'exp', 
+                    range(1, 6),
+                    (meteor.img_size, meteor.img_size)
+                )
+                animation_group.add(explosion)
 
-    if spaceship_group.sprite.health < 5 and pygame.sprite.spritecollide(spaceship_group.sprite, shield_group, True):
+    if pygame.sprite.spritecollide(spaceship_group.sprite, meteor_group, False): # returns a list of collided sprites
+        meteors_collided = pygame.sprite.spritecollide(spaceship_group.sprite, meteor_group, True)
+        
+        for meteor in meteors_collided:
+            if meteor.is_giant:
+                spaceship_group.sprite.get_damage(2)
+            else:
+                spaceship_group.sprite.get_damage(1)
+            
+            crash = Animation(
+                meteor.rect.x + 50, 
+                meteor.rect.y + 50, 
+                'exp', 
+                range(1, 6),
+                (meteor.img_size, meteor.img_size)
+            )
+            animation_group.add(crash)
+
+            crash_sound.play()
+        
+        if spaceship_group.sprite.health <= 0:
+            main_sound.stop()
+            end_sound.play()
+            
+    if spaceship_group.sprite.health < 5 and pygame.sprite.spritecollide(spaceship_group.sprite, shield_group, False):
+        shields = pygame.sprite.spritecollide(spaceship_group.sprite, shield_group, True)
+       
+        for shield in shields:
+            particles = Animation(
+                shield.rect.x, 
+                shield.rect.y, 
+                'particles', 
+                range(1, 7),
+                (220, 220)
+            )
+            animation_group.add(particles)
+        
         spaceship_group.sprite.get_shield(1)
+        booster_sound.play()
 
-    if pygame.sprite.spritecollide(spaceship_group.sprite, laser_acc_group, True): # returns a list of collided sprites
-        accelerator_active = True
-        accelerator_timer = pygame.time.get_ticks()
+    if pygame.sprite.spritecollide(spaceship_group.sprite, laser_booster_group, False): # returns a list of collided sprites
+        booster_active = True
+        booster_timer = pygame.time.get_ticks()
+
+        boosters = pygame.sprite.spritecollide(spaceship_group.sprite, laser_booster_group, True)
+       
+        for booster in boosters:
+            particles_acc = Animation(
+                booster.rect.x + 100, 
+                booster.rect.y + 120, 
+                'particles', 
+                range(1, 7),
+                (220, 220)
+            )
+            animation_group.add(particles_acc)
+            
+        booster_sound.play()
 
     # Laser timer for laser recharging
     if pygame.time.get_ticks() - laser_timer >= 1000: #200
         laser_active = True
         spaceship_group.sprite.charge()
 
-    if pygame.time.get_ticks() - accelerator_timer >= 12000:
-        accelerator_active = False
-
-    explosion_group.draw(screen)
-    explosion_group.update()
+    if pygame.time.get_ticks() - booster_timer >= 12000:
+        booster_active = False
 
     return 1
 
@@ -359,7 +431,7 @@ while True:
             laser_active = False
             laser_timer = pygame.time.get_ticks()
 
-            if accelerator_active:
+            if booster_active:
                 laser_rotated_left = Laser('./assets/gfx/laser.png', event.pos, 12, 'left', 8)
                 laser_rotated_left.rotate_left()
                 laser_group.add(laser_rotated_left)
@@ -375,20 +447,30 @@ while True:
             spaceship_group.sprite.health = 5
             meteor_group.empty()
             shield_group.empty()
-            laser_acc_group.empty()
+            laser_booster_group.empty()
             laser_active = False
-            accelerator_active = False
+            booster_active = False
             score = 0
             intro_loaded = False
             game_state = "intro"
 
-        if event.type == pygame.MOUSEBUTTONDOWN and game_state == "intro" and intro_loaded:
+            intro_sound.play()
+            end_sound.stop()
+
+            for animation_sprite in animation_group:
+                animation_sprite.kill()
+
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE and game_state == "intro" and intro_loaded:
             game_state = "main"
             intro_loaded = False
 
+            intro_sound.stop()
+            main_sound.play()
+
         if event.type == SHIELD_EVENT and not intro_loaded:
-            shield = Shield(
+            shield = Booster(
                 './assets/gfx/shield.png',
+                0,
                 random.randrange(0, 1280),
                 random.randrange(-500, -50),
                 random.randrange(-1, 1),
@@ -397,15 +479,16 @@ while True:
 
             shield_group.add(shield)
 
-        if event.type == ACCELERATOR_EVENT and not intro_loaded:
-            laser_acc = LaserAccelerator(
-                './assets/gfx/item_1.png',
+        if event.type == LASER_BOOSTER_EVENT and not intro_loaded:
+            laser_booster = Booster(
+                './assets/gfx/booster.png',
+                1,
                 random.randrange(0, 1280),
                 random.randrange(-500, -50),
                 random.randrange(-1, 1),
                 random.randrange(1, 4)
             )
-            laser_acc_group.add(laser_acc)
+            laser_booster_group.add(laser_booster)
 
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             spaceship_group.sprite.health = 0
