@@ -30,6 +30,8 @@ water_position_y = 640
 water_speed = 1.5
 
 duck_rect_list = []
+duck_pos_list = []
+duck_pos_vector = 1
 '''
 def drawRect(surface, pos):
     return surface.get_rect(center = pos)
@@ -38,7 +40,9 @@ def drawRect(surface, pos):
 for i in range(20):
     duck_position_x = random.randrange(50, 1200)
     duck_position_y = random.randrange(120, 600)
+    duck_pos_speed = random.randrange(1, 12)
     duck_rect = duck_surface.get_rect(center = (duck_position_x, duck_position_y))
+    duck_pos_list.append([duck_position_x, duck_position_y, duck_pos_vector, duck_pos_speed])
     duck_rect_list.append(duck_rect)
 
 crosshair_rect = None
@@ -56,15 +60,20 @@ while True:
         if event.type == pygame.MOUSEBUTTONDOWN:
             for index, duck_rect in enumerate(duck_rect_list):
                 if duck_rect.collidepoint(event.pos):   # Collision refinement --instead of crosshair_rect.colliderect(duck_rect):
-                    del duck_rect_list[index]
+                    del duck_rect_list[index] 
+                    del duck_pos_list[index]
 
     # WOOD - BACKGROUND               
     screen.blit(wood_bg, (0,0))
 
     # DUCKS
-    for rect in duck_rect_list:
-        screen.blit(duck_surface, rect)
-
+    for index, duck_rect in enumerate(duck_rect_list):
+        if not duck_rect.x in range(duck_pos_list[index][0] - 250, duck_pos_list[index][0] + 250):
+            duck_pos_list[index][2] *= -1
+        duck_rect.x += duck_pos_list[index][3] * duck_pos_list[index][2]
+    
+        screen.blit(duck_surface, duck_rect)
+  
     # CLOSURE TEXT
     if not len(duck_rect_list):
         screen.blit(text_surface, text_rect)
@@ -86,10 +95,11 @@ while True:
     screen.blit(water_bg, (0, water_position_y))
 
     # we use the position of the rect as the position of the crosshair
-    # place surface/img on the rect
+    # place the surface/img on the rect
     if not crosshair_rect:
         crosshair_rect = crosshair.get_rect(center = (640,340))
 
+    
     screen.blit(crosshair, crosshair_rect) 
 
     screen.blit(cloud_bg_1, (50,150))
