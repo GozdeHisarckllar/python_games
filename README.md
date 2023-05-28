@@ -14,7 +14,7 @@ The game projects that I built using Python and [PyGame](https://www.pygame.org/
   - laser enhancement (triple laser shooter)
   - meteors in variant sizes
   - looping motion background
-  - graphic & sound effects for collided game items
+  - graphic & sound effects
     - Space Music Pack ([https://gooseninja.itch.io/space-music-pack](https://gooseninja.itch.io/space-music-pack))
     - Sound Effect by SoulProdMusic from [Pixabay](https://pixabay.com/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=6264)
 ---
