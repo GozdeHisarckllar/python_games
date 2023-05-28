@@ -411,6 +411,7 @@ def end_game():
 while True:
     for event in pygame.event.get(): # check for event/player input
         if event.type == pygame.QUIT:
+            oalQuit()
             pygame.quit()
             sys.exit()
 
