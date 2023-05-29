@@ -46,7 +46,7 @@ yay_sound = oalOpen('./assets/sfx/yay.wav')
 background_sound.set_looping(True)
 
 oal_listener = oalGetListener() 
-oal_listener.set_gain(.2)
+oal_listener.set_gain(.25)
 
 background_sound.play()
 # TEXT settings
@@ -110,7 +110,7 @@ while True:
 
                     shot = Animation(event.pos[0], event.pos[1])
                     animation_group.add(shot)
-
+             
                     hit_sound.play()
 
     # WOOD - BACKGROUND               
@@ -131,7 +131,6 @@ while True:
 
         if not is_end:
             result_sound.play()
-            time.sleep(1.5)
             yay_sound.play()
             is_end = True
     
