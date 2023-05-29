@@ -79,7 +79,7 @@ def drawRect(surface, pos):
     return surface.get_rect(center = pos)
 '''
 # DUCK RECTS
-for i in range(20):
+for i in range(25):
     duck_position_x = random.randrange(50, 1200)
     duck_position_y = random.randrange(120, 600)
     duck_pos_speed = random.randrange(1, 12)
