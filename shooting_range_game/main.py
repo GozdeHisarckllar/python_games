@@ -169,5 +169,6 @@ while True:
     animation_group.draw(screen)
     animation_group.update()
 
+    pygame.display.set_caption('Shooting Range')
     pygame.display.update()
     clock.tick(120)

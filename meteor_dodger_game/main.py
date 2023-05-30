@@ -502,7 +502,8 @@ while True:
             score += main_game()
         else:
             end_game()
- 
+    
+    pygame.display.set_caption('Meteor Dodger')
     pygame.display.update() # draw frame
     clock.tick(120) # control the frame rate
     

@@ -15,11 +15,11 @@ The game projects that I built using Python and [PyGame](https://www.pygame.org/
   - meteors in variant sizes
   - looping motion background
   - graphic & sound effects
-    - Space Music Pack ([https://gooseninja.itch.io/space-music-pack](https://gooseninja.itch.io/space-music-pack))
+    - Space Music Pack by [gooseninja](https://gooseninja.itch.io/space-music-pack)
     - Sound Effect by SoulProdMusic from [Pixabay](https://pixabay.com/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=6264)
 ---
 * I added these extra features to the Shooting-range game:
   - moving target items
   - graphic & sound effects
-    - Sound Pack by semko ([https://semkou.itch.io/sound-pack-free](https://semkou.itch.io/sound-pack-free))
+    - Sound Pack by [semko](https://semkou.itch.io/sound-pack-free)
     - Sound Effect from [Pixabay](https://pixabay.com/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=6264)
